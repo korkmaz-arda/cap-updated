@@ -1,6 +1,5 @@
 # Context-aware Attentional Pooling (CAP) - UPDATED
 
-Modernizing CAP model to work with Tensorflow 2.x and Keras 3.x.
+Updating the CAP model for TensorFlow 2.x and Keras 3.x compatibility
 
-Original repo for CAP model can be found here:
-https://github.com/ArdhenduBehera/cap
+The original CAP model repository is available [here](https://github.com/ArdhenduBehera/cap).
