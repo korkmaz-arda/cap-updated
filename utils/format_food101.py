@@ -1,6 +1,6 @@
 # The code is sourced from: 
 # https://gitlab.jsc.fz-juelich.de/kiste/vissl/-/blob/c2aa96d0569caea4be264b2132d0931d2599e1ed/extra_scripts/datasets/create_food101_data_files.py
-# It is also featured in an old version of VISSL (https://github.com/facebookresearch/vissl)
+# It is also featured in an old version of the original VISSL repo (https://github.com/facebookresearch/vissl)
 
 import os
 from PIL import Image
