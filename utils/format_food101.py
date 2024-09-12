@@ -37,7 +37,7 @@ class Food101:
                 self.targets.append(label)
                 self.images.append(
                     os.path.join(
-                        self.input_path,
+                        # self.input_path,
                         self.IMAGE_FOLDER,
                         label,
                         image_file_name + self.IMAGE_EXT,

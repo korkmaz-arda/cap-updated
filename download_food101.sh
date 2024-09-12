@@ -23,3 +23,5 @@ echo "Food-101 dataset downloaded, unzipped, and moved to $TARGET_DIR successful
 
 echo "Formatting the Food-101 dataset..."
 python3 utils/format_food101.py
+
+echo "Food-101 dataset formatted successfully!"

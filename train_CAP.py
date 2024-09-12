@@ -11,18 +11,18 @@ from tensorflow.keras.applications.xception import Xception, preprocess_input
 
 
 '''Local Imports'''
-from custom_validate_callback import CustomCallback
-from image_data_generator import DirectoryDataGenerator
-from loupe_keras import NetRVLAD
-from roi_pooling_conv import RoiPoolingConv
-from self_attention import SelfAttention
-from seq_attention import SeqSelfAttention
-from spectral_normalization import ConvSN2D
-from se import squeeze_excite_block
+from cap.custom_validate_callback import CustomCallback
+from cap.image_data_generator import DirectoryDataGenerator
+from cap.loupe_keras import NetRVLAD
+from cap.roi_pooling_conv import RoiPoolingConv
+from cap.self_attention import SelfAttention
+from cap.seq_attention import SeqSelfAttention
+from cap.spectral_normalization import ConvSN2D
+from cap.se import squeeze_excite_block
 
 
 '''Variables'''
-batch_size = 16 # 8
+batch_size = 32 # 8
 checkpoint_freq = 5
 dataset_dir = "./datasets/food-101-splits"
 epochs = 10
