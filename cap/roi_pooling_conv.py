@@ -1,6 +1,8 @@
+import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
 import tensorflow.keras.backend as K
+from tensorflow.keras.layers import Layer
+
 
 class RoiPoolingConv(Layer):
     '''ROI pooling layer for 2D inputs.
@@ -21,7 +23,8 @@ class RoiPoolingConv(Layer):
     def __init__(self, pool_size, num_rois, rois_mat=None, **kwargs):
         self.pool_size = pool_size
         self.num_rois = num_rois
-        self.rois_mat = rois_mat  # Predefined ROIs passed as a numpy array
+        # self.rois_mat = rois_mat  # Predefined ROIs passed as a numpy array
+        self.rois_mat = np.array(rois_mat) if rois_mat is not None else np.array([])
         super(RoiPoolingConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -60,7 +63,7 @@ class RoiPoolingConv(Layer):
         return final_output
 
     def get_config(self):
-        config = {'pool_size': self.pool_size, 'num_rois': self.num_rois, 'rois_mat': self.rois_mat}
+        config = {'pool_size': self.pool_size, 'num_rois': self.num_rois, 'rois_mat': self.rois_mat.tolist()}
         base_config = super(RoiPoolingConv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 

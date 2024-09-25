@@ -22,6 +22,6 @@ rm $TAR_FILE
 echo "Food-101 dataset downloaded, unzipped, and moved to $TARGET_DIR successfully!"
 
 echo "Formatting the Food-101 dataset..."
-python3 utils/format_food101.py
+python3 utils/split_food101.py
 
 echo "Food-101 dataset formatted successfully!"

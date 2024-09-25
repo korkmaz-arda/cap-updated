@@ -1,6 +1,7 @@
 '''Imports'''
 import os
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers, backend as K
 from tensorflow.keras.models import Model, load_model
@@ -8,6 +9,7 @@ from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 from tensorflow.keras.applications.xception import Xception, preprocess_input
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, top_k_accuracy_score
 
 
 '''Local Imports'''
@@ -22,17 +24,17 @@ from cap.se import squeeze_excite_block
 
 
 '''Variables'''
-batch_size = 32 # 8
+batch_size = 16 # 12
 checkpoint_freq = 5
-dataset_dir = "./datasets/food-101-splits"
-epochs = 10
+dataset_dir = "./datasets/food-101-3splits"
+epochs = 10 # 150
 image_size = (224,224)
 lstm_units = 128
 model_name = "CAP_Xception"
 nb_classes = 101
 optimizer = SGD(learning_rate=0.0001, momentum=0.99, nesterov=True)
 train_dir = "{}/train".format(dataset_dir)
-val_dir = "{}/test".format(dataset_dir)
+val_dir = "{}/val".format(dataset_dir)
 validation_freq = 5
 
 # train_food101.pyos.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -139,7 +141,7 @@ x_final = SelfAttention(filters=base_channels)([x, x_f, x_g, x_h])
 #x_final = base_out
 
 # full_img = layers.Lambda(lambda x: K.tf.image.resize_images(x,size=(ROIS_resolution, ROIS_resolution)), name='Lambda_img_1')(x_final) #Use bilinear upsampling (default tensorflow image resize) to a reasonable size
-full_img = layers.Lambda(lambda x: tf.image.resize(x, size=(ROIS_resolution, ROIS_resolution)), 
+full_img = layers.Lambda(lambda x: tf.image.resize(x, size=(ROIS_resolution, ROIS_resolution)),
                          output_shape=(ROIS_resolution, ROIS_resolution, base_channels), 
                          name='Lambda_img_1')(x_final)
 
@@ -197,11 +199,10 @@ def epoch_decay(epoch):
 
 basic_schedule = LearningRateScheduler(epoch_decay)
 
-metrics_dir = './Metrics/{}'.format(model_name)
+# metrics_dir = './Metrics/{}'.format(model_name)
+metrics_dir = './Metrics/'
 output_model_dir = './TrainedModels/{}'.format(model_name)
-csv_logger = CSVLogger(metrics_dir + '(Training).csv')
-# checkpointer = ModelCheckpoint(filepath = output_model_dir + '.{epoch:02d}.h5', verbose=1, save_weights_only=False, period=checkpoint_freq)
-# checkpointer = ModelCheckpoint(filepath = output_model_dir + '.{epoch:02d}.h5', verbose=1, save_weights_only=False, save_freq='epoch')
+csv_logger = CSVLogger(metrics_dir + 'training_metrics.csv')
 checkpointer = ModelCheckpoint(filepath = output_model_dir + '.{epoch:02d}.keras', verbose=1, save_weights_only=False, save_freq='epoch')
 
 nb_train_samples = sum([len(files) for r, d, files in os.walk(train_dir)])
@@ -213,5 +214,61 @@ val_dg = DirectoryDataGenerator(base_directories=[val_dir], augmentor=False, tar
 print("train images: ", nb_train_samples)
 print("val images: ", nb_val_samples)
 
-# model.fit_generator(train_dg, steps_per_epoch=nb_train_samples // batch_size,  epochs=epochs, callbacks=[checkpointer, csv_logger, CustomCallback(val_dg, validation_freq, metrics_dir)])
+
 model.fit(train_dg, steps_per_epoch=nb_train_samples // batch_size,  epochs=epochs, callbacks=[checkpointer, csv_logger, CustomCallback(val_dg, validation_freq, metrics_dir)])
+model.save('lastmodel.h5')
+
+# custom_obj = {
+#     'ConvSN2D': ConvSN2D, 
+#     'SelfAttention': SelfAttention,
+#     'SeqSelfAttention': SeqSelfAttention,
+#     'RoiPoolingConv': RoiPoolingConv,
+#     'NetRVLAD': NetRVLAD
+# }
+
+'''Testing'''
+def evaluate_model(model, test_data_generator, class_labels, output_path):
+    y_true = []
+    y_pred = []
+
+    # collect labels
+    for i in range(len(test_data_generator)):
+        _, labels = test_data_generator[i]  
+        y_true.extend(np.argmax(labels, axis=1))  # one-hot labels --> class indices
+
+    # predict
+    y_pred_prob = model.predict(test_data_generator, steps=len(test_data_generator), verbose=1)
+    y_pred = np.argmax(y_pred_prob, axis=1)  # probabilities --> predicted class indices
+
+    # generate metrics
+    report = classification_report(y_true, y_pred, target_names=class_labels, output_dict=True)
+    accuracy = accuracy_score(y_true, y_pred)
+    top_3_accuracy = top_k_accuracy_score(y_true, y_pred_prob, k=3)
+    top_5_accuracy = top_k_accuracy_score(y_true, y_pred_prob, k=5)
+    conf_matrix = confusion_matrix(y_true, y_pred)
+
+    # save metrics
+    report_df = pd.DataFrame(report).transpose()
+    report_df['accuracy'] = accuracy
+    report_df['top_3_accuracy'] = top_3_accuracy
+    report_df['top_5_accuracy'] = top_5_accuracy
+    report_df.to_csv(os.path.join(output_path, 'metrics.csv'), index=True)
+
+    print("Confusion Matrix:\n", conf_matrix)
+    print(f"Accuracy: {accuracy}")
+    print(f"Top-3 Accuracy: {top_3_accuracy}")
+    print(f"Top-5 Accuracy: {top_5_accuracy}")
+
+    return y_pred
+
+
+test_dir = "{}/test".format(dataset_dir)
+class_labels = sorted(os.listdir(test_dir))
+test_dg = DirectoryDataGenerator(base_directories=[test_dir], 
+                                augmentor=False, 
+                                target_sizes=image_size, 
+                                preprocessors=preprocess_input, 
+                                batch_size=batch_size, 
+                                shuffle=False)
+
+predictions = evaluate_model(model, test_dg, class_labels, metrics_dir)

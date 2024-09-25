@@ -1,7 +1,5 @@
-pillow
-torch
-tqdm
-numpy
+numpy==1.26
+tensorflow==2.14.0
 opencv-python
-tensorflow
-keras
+pillow
+tqdm
