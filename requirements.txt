@@ -1,5 +1,6 @@
 numpy==1.26
 tensorflow==2.14.0
 opencv-python
-pillow
+scikit-learn
+pandas
 tqdm
