@@ -21,6 +21,14 @@ mv food-101 $TARGET_DIR
 rm $TAR_FILE
 echo "Food-101 dataset downloaded, unzipped, and moved to $TARGET_DIR successfully!"
 
+echo "Installing required Python libraries..."
+pip install -r requirements.txt
+
+echo "Installing required system libraries..."
+# assuming the system is debian based
+sudo apt update
+sudo apt install -y libgl1
+
 echo "Formatting the Food-101 dataset..."
 python3 utils/split_food101.py
 
